@@ -9,6 +9,8 @@ export interface HistoryItem {
   timestamp: number;
   rows?: number;
   cost?: number;
+  status?: 'success' | 'error';
+  errorMessage?: string;
 }
 
 export const useQueryHistory = () => {
@@ -25,7 +27,7 @@ export const useQueryHistory = () => {
     }
   }, []);
 
-  const saveToHistory = useCallback((query: string, rows?: number, cost?: number) => {
+  const saveToHistory = useCallback((query: string, rows?: number, cost?: number, status?: 'success' | 'error', errorMessage?: string) => {
     if (!query.trim()) return;
 
     setHistory((prev) => {
@@ -39,6 +41,8 @@ export const useQueryHistory = () => {
         timestamp: Date.now(),
         rows: rows !== undefined ? rows : existing?.rows,
         cost: cost !== undefined ? cost : existing?.cost,
+        status: status !== undefined ? status : existing?.status,
+        errorMessage: errorMessage !== undefined ? errorMessage : existing?.errorMessage,
       };
       
       const updated = [newItem, ...filtered].slice(0, MAX_HISTORY_ITEMS);
@@ -53,6 +57,15 @@ export const useQueryHistory = () => {
     });
   }, []);
 
+  const setHistoryList = useCallback((newHistory: HistoryItem[]) => {
+    setHistory(newHistory);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Failed to save query history', error);
+    }
+  }, []);
+
   const clearHistory = useCallback(() => {
     setHistory([]);
     try {
@@ -62,5 +75,5 @@ export const useQueryHistory = () => {
     }
   }, []);
 
-  return { history, saveToHistory, clearHistory };
+  return { history, saveToHistory, clearHistory, setHistoryList };
 };

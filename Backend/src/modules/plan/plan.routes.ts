@@ -1,8 +1,9 @@
 import { Router } from "express"
-import { getPlan } from "./plan.controller.js"
+import { getPlan, testConnection } from "./plan.controller.js"
 
 const router = Router()
 
 router.post("/", getPlan)
+router.post("/test", testConnection)
 
 export default router

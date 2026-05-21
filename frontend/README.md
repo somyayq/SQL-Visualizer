@@ -1,73 +1,117 @@
-# React + TypeScript + Vite
+# SQL‑Visualizer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+SQL‑Visualizer is a modern web application that lets you write **SQL queries** and instantly see **visual representations** of the results. Built with a sleek, premium UI, it offers real‑time tables and charts, dark mode, and easy export options.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Interactive query editor with syntax highlighting
+- Real‑time results displayed in a responsive table
+- Chart visualizations (bar, line, pie) generated from query results
+- Dark mode with glass‑morphism styling
+- Export results to CSV/JSON
+- Supports PostgreSQL, MySQL, SQLite (configurable via the backend)
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Recharts
+- **Backend**: Node.js, Express, `node-postgres` (or `mysql2`/`sqlite3`)
+- **Styling**: Tailwind CSS with custom dark theme and glass‑morphism effects
+- **Testing**: Vitest & React Testing Library
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+
+### Prerequisites
+
+- Node.js ≥ 20
+- npm ≥ 10
+- A running SQL database (PostgreSQL, MySQL, or SQLite)
+
+### Installation
+
+```bash
+# Clone the repo
+git clone <repo‑url>
+cd SQL-Visualizer
+
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../Backend
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Open two terminals:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Frontend**
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   The app will be served at `http://localhost:5173`.
+
+2. **Backend**
+   ```bash
+   cd ../Backend
+   npm start
+   ```
+   The API runs on `http://localhost:5000`.
+
+### Production Build
+
+```bash
+cd frontend
+npm run build
 ```
+   The compiled static files appear in `dist/` and can be served by the Express backend or any static web server.
+
+---
+
+## Project Structure
+
+```
+SQL-Visualizer/
+├─ Backend/          # Express API handling SQL execution
+│   ├─ src/
+│   └─ package.json
+├─ frontend/         # React TypeScript UI
+│   ├─ src/
+│   │   ├─ components/   # Reusable UI components
+│   │   ├─ pages/        # Main app pages (QueryEditor, Results, Settings)
+│   │   └─ App.tsx
+│   ├─ public/
+│   ├─ tailwind.config.js
+│   └─ vite.config.ts
+└─ README.md         # This file
+```
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/awesome-feature`)
+3. Follow the existing ESLint configuration (see *Expanding the ESLint configuration* above)
+4. Write tests for new functionality
+5. Submit a pull request
+
+---
+
+## License
+
+MIT © 2026 Your Name
+
+---
+
+*Enjoy visualizing your data!*

@@ -57,3 +57,60 @@ export const getPlan = async (req: Request, res: Response) => {
     return res.status(400).json(response)
   }
 }
+
+export const testConnection = async (req: Request, res: Response) => {
+  try {
+    const { dbConfig } = req.body as { dbConfig?: any }
+
+    if (!dbConfig || !dbConfig.host || !dbConfig.database || !dbConfig.user) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: "Configuration is incomplete. Please provide host, database, and user."
+      }
+      return res.status(400).json(response)
+    }
+
+    if (dbConfig.type === 'postgres') {
+      const { Client } = await import('pg');
+      const client = new Client({
+        host: dbConfig.host,
+        port: parseInt(dbConfig.port, 10) || 5432,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        database: dbConfig.database,
+        connectionTimeoutMillis: 5000,
+      });
+      await client.connect();
+      await client.end();
+    } else if (dbConfig.type === 'mysql') {
+      const mysql = await import('mysql2/promise');
+      const connection = await mysql.createConnection({
+        host: dbConfig.host,
+        port: parseInt(dbConfig.port, 10) || 3306,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        database: dbConfig.database,
+        connectTimeout: 5000,
+      });
+      await connection.end();
+    } else {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: "Unsupported database type."
+      }
+      return res.status(400).json(response)
+    }
+
+    const response: ApiResponse<{ message: string }> = {
+      success: true,
+      data: { message: "Connected successfully" }
+    }
+    return res.status(200).json(response)
+  } catch (error: any) {
+    const response: ApiResponse<null> = {
+      success: false,
+      error: error.message
+    }
+    return res.status(400).json(response)
+  }
+}

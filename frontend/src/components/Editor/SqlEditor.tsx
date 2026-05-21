@@ -179,7 +179,7 @@ export const SqlEditor = ({ query, setQuery, onRun, onOptimize, isLoading, isOpt
               disabled={isLoading || isOptimizing}
               className={`min-w-40 bg-surface-high border border-primary/30 text-primary font-bold py-2.5 rounded uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${(isLoading || isOptimizing) ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/10"}`}
             >
-              {isOptimizing ? <span className="animate-spin">◌</span> : <><span>✨</span> OPTIMIZE</>}
+              {isOptimizing ? <span className="animate-spin">◌</span> : <> OPTIMIZE</>}
             </button>
           </div>
         </div>

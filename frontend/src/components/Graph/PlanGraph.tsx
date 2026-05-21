@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import ReactFlow, { Background, Controls, useNodesState, useEdgesState } from "reactflow";
+import ReactFlow, { Background, Controls, useNodesState, useEdgesState, BackgroundVariant } from "reactflow";
 import "reactflow/dist/style.css";
 import PlanNode from "./PlanNode";
 
@@ -28,7 +28,7 @@ const PlanGraph = ({ nodes: initialNodes, edges: initialEdges }: any) => {
         fitView
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={16} size={1} color="#ffffff10" />
+        <Background variant={BackgroundVariant.Lines} gap={24} size={1} color="#ffffff10" />
         <Controls className="!bg-surface-low !border-surface-bright/10 !fill-white [&>button]:!border-surface-bright/10 [&>button]:!bg-surface-low hover:[&>button]:!bg-primary/20" />
       </ReactFlow>
     </div>

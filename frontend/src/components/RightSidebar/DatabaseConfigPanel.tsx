@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Database, Settings2, Save } from "lucide-react";
-import { type DatabaseConfig } from "../../hooks/useDatabaseConfig";
+import { Database, Settings2, Save, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
+import { type DatabaseConfig, type ConnectionStatus } from "../../hooks/useDatabaseConfig";
 
 interface DatabaseConfigProps {
   config: DatabaseConfig;
   onSaveConfig: (config: DatabaseConfig) => void;
+  status: ConnectionStatus;
+  errorMessage?: string;
 }
 
-export const DatabaseConfigPanel = ({ config, onSaveConfig }: DatabaseConfigProps) => {
+export const DatabaseConfigPanel = ({ config, onSaveConfig, status, errorMessage }: DatabaseConfigProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [localConfig, setLocalConfig] = useState<DatabaseConfig>(config);
 
@@ -49,6 +51,34 @@ export const DatabaseConfigPanel = ({ config, onSaveConfig }: DatabaseConfigProp
               {config.host}:{config.port} ({config.type})
             </p>
           </div>
+          {/* Connection status */}
+          <div className="flex items-center gap-2 mt-1">
+            {status === 'connecting' && (
+              <span className="flex items-center gap-1.5 text-yellow-500 font-mono text-xs">
+                <Loader2 size={12} className="animate-spin" /> Connecting...
+              </span>
+            )}
+            {status === 'connected' && (
+              <span className="flex items-center gap-1.5 text-green-400 font-mono text-xs">
+                <Wifi size={12} /> Connected
+              </span>
+            )}
+            {status === 'disconnected' && (
+              <span className="flex items-center gap-1.5 text-white/40 font-mono text-xs">
+                <WifiOff size={12} /> Disconnected
+              </span>
+            )}
+            {status === 'error' && (
+              <span className="flex items-center gap-1.5 text-red-400 font-mono text-xs" title={errorMessage}>
+                <AlertCircle size={12} /> Connection Failed
+              </span>
+            )}
+          </div>
+          {status === 'error' && errorMessage && (
+            <p className="text-[10px] font-mono text-red-400/85 mt-1 max-w-full break-words bg-red-500/5 p-2 rounded border border-red-500/10">
+              {errorMessage}
+            </p>
+          )}
           <p className="text-[10px] text-white/30 italic text-center mt-2">
             Using connection for realistic query plans.
           </p>

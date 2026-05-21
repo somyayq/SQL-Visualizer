@@ -8,7 +8,7 @@ export const transformPlan = (plan: any) => {
     nodeChildren[e.target].push(e.source);
   });
 
-  const nodesMap = new Map(plan.nodes.map((n: any) => [String(n.id), n]));
+  const nodesMap = new Map<string, any>(plan.nodes.map((n: any) => [String(n.id), n]));
 
   let maxOwnCost = 0;
   plan.nodes.forEach((n: any) => {

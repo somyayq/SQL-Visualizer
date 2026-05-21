@@ -1,9 +1,8 @@
-import React from 'react';
 
 export const Navbar = () => {
   return (
     <header className="flex justify-between items-center">
-      <h1 className="font-display font-bold text-2xl tracking-tighter text-white">
+      <h1 className="font-display font-bold text-4xl tracking-tighter text-white">
         SQL<span className="text-primary">Query</span>
         <span className="text-white">Visualizer</span>
       </h1>
