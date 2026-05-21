@@ -1,14 +1,17 @@
 import { useState, useRef } from "react";
 
 interface SqlEditorProps {
+  query: string;
+  setQuery: (query: string) => void;
   onRun: (query: string) => void;
+  onOptimize: (query: string) => void;
   isLoading?: boolean;
+  isOptimizing?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errorDetails?: any;
 }
 
-export const SqlEditor = ({ onRun, isLoading, errorDetails }: SqlEditorProps) => {
-  const [query, setQuery] = useState("");
+export const SqlEditor = ({ query, setQuery, onRun, onOptimize, isLoading, isOptimizing, errorDetails }: SqlEditorProps) => {
   const [cursorPos, setCursorPos] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -62,7 +65,7 @@ export const SqlEditor = ({ onRun, isLoading, errorDetails }: SqlEditorProps) =>
        injectedCode = injectedCode.slice(0, m.index) + m.text + injectedCode.slice(m.index);
     }
     
-    let safeCode = injectedCode
+    const safeCode = injectedCode
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
@@ -80,7 +83,7 @@ export const SqlEditor = ({ onRun, isLoading, errorDetails }: SqlEditorProps) =>
 
     highlighted = highlighted.replace(/'(.*?)'/g, '<span class="text-green-400">\'$1\'</span>');
 
-    const cursorHtml = `<span class="inline-block w-[2px] h-[1.1em] bg-primary shadow-[0_0_12px_#FF8C00] align-middle animate-pulse mx-[1px]"></span>`;
+    const cursorHtml = `<span class="inline-block w-0.5 h-[1.1em] bg-primary shadow-[0_0_12px_#FF8C00] align-middle animate-pulse mx-px"></span>`;
     const errStartHtml = `<span class="underline decoration-red-500 decoration-wavy decoration-2 bg-red-500/10">`;
     const errEndHtml = `</span>`;
 
@@ -109,10 +112,10 @@ export const SqlEditor = ({ onRun, isLoading, errorDetails }: SqlEditorProps) =>
 
       {/* Editor Surface */}
       <div 
-        className="bg-surface-lowest p-6 min-h-[300px] font-mono text-sm relative group cursor-text"
+        className="bg-surface-lowest p-6 min-h-75 font-mono text-sm relative group cursor-text"
         onClick={() => textareaRef.current?.focus()}
       >
-        <div className="flex gap-6 h-full min-h-[250px]">
+        <div className="flex gap-6 h-full min-h-62.5">
           {/* Line Numbers */}
           <div className="text-on-surface-variant/20 select-none text-right w-5 leading-6 border-r border-surface-bright/10 pr-4 italic">
             {query.split("\n").map((_, i) => (
@@ -123,7 +126,7 @@ export const SqlEditor = ({ onRun, isLoading, errorDetails }: SqlEditorProps) =>
           <div className="relative flex-1 leading-6">
             {/* Display Layer */}
             <div
-              className="absolute inset-0 pointer-events-none whitespace-pre-wrap break-words text-white/90 z-10"
+              className="absolute inset-0 pointer-events-none whitespace-pre-wrap wrap-break-words text-white/90 z-10"
               dangerouslySetInnerHTML={{
                 __html: highlightAndInjectCursor(query),
               }}
@@ -143,7 +146,7 @@ export const SqlEditor = ({ onRun, isLoading, errorDetails }: SqlEditorProps) =>
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               spellCheck={false}
-              className="absolute inset-0 bg-transparent text-transparent caret-transparent outline-none resize-none w-full h-full whitespace-pre-wrap break-words z-20 overflow-hidden"
+              className="absolute inset-0 bg-transparent text-transparent caret-transparent outline-none resize-none w-full h-full whitespace-pre-wrap wrap-break-words z-20 overflow-hidden"
             />
           </div>
         </div>
@@ -156,20 +159,29 @@ export const SqlEditor = ({ onRun, isLoading, errorDetails }: SqlEditorProps) =>
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             Syntax Error
           </div>
-          <p className="text-red-300/80 text-sm font-mono mt-1 whitespace-pre-wrap break-words">Invalid SQL syntax. Check your query and try again.</p>
+          <p className="text-red-300/80 text-sm font-mono mt-1 whitespace-pre-wrap wrap-break-words">Invalid SQL syntax. Check your query and try again.</p>
         </div>
       )}
 
       {/* Action Bar */}
       <div className="p-4 flex flex-col gap-4 bg-background/40 backdrop-blur-sm border-t border-surface-bright/10">
         <div className="flex justify-between items-center">
+          <div className="flex gap-4">
             <button
               onClick={() => onRun(query)}
-              disabled={isLoading}
-              className={`min-w-[160px] bg-gradient-to-r from-primary to-primary-container text-black font-bold py-2.5 rounded uppercase tracking-[0.1em] text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${isLoading ? "opacity-50 cursor-not-allowed" : "hover:shadow-[0_0_20px_rgba(255,140,0,0.3)]"}`}
+              disabled={isLoading || isOptimizing}
+              className={`min-w-40 bg-linear-to-r from-primary to-primary-container text-black font-bold py-2.5 rounded uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${(isLoading || isOptimizing) ? "opacity-50 cursor-not-allowed" : "hover:shadow-[0_0_20px_rgba(255,140,0,0.3)]"}`}
             >
               {isLoading ? <span className="animate-spin">◌</span> : <><span>▶</span> RUN QUERY</>}
             </button>
+            <button
+              onClick={() => onOptimize(query)}
+              disabled={isLoading || isOptimizing}
+              className={`min-w-40 bg-surface-high border border-primary/30 text-primary font-bold py-2.5 rounded uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${(isLoading || isOptimizing) ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/10"}`}
+            >
+              {isOptimizing ? <span className="animate-spin">◌</span> : <><span>✨</span> OPTIMIZE</>}
+            </button>
+          </div>
         </div>
         <p className="text-[13px] text-on-surface-variant/40 italic flex items-center gap-2">
           <span className="text-primary opacity-60">TIP:</span> Use standard SQL syntax. The visualizer supports JOINs and WHERE clauses.

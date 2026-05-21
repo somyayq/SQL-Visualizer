@@ -1,4 +1,4 @@
-export type NodeType= "SCAN" | "FILTER" | "PROJECTION" | "JOIN"
+export type NodeType = string;
 
 export interface PlanNode{
     id:string,

@@ -81,8 +81,8 @@ export const generatePlan = (rawAst: unknown): PlanData => {
       rightRows
     )
 
-    const joinCondition = tableObj.on
-      ? parseExpr(tableObj.on)
+    const joinCondition = (tableObj as any).on
+      ? parseExpr((tableObj as any).on)
       : ""
 
     const joinType =
@@ -136,9 +136,9 @@ export const generatePlan = (rawAst: unknown): PlanData => {
   } else {
     columns = ast.columns
       .map(c =>
-        c.expr.table
-          ? `${c.expr.table}.${c.expr.column}`
-          : c.expr.column
+        (c.expr as any).table
+          ? `${(c.expr as any).table}.${(c.expr as any).column}`
+          : (c.expr as any).column
       )
       .join(", ")
   }
