@@ -3,10 +3,11 @@ import { SqlEditor } from "../components/Editor/SqlEditor";
 import PlanGraph from "../components/Graph/PlanGraph";
 import { getPlan, optimizeQuery } from "../services/api";
 import { transformPlan } from "../utils/transform";
-import { Maximize, Minimize, Copy, FileJson, CheckCircle2, AlertCircle } from "lucide-react";
+import { Maximize, Minimize, Copy, FileJson, CheckCircle2, AlertCircle, Upload, Download, Monitor } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { PerformanceHud } from "../components/PerformanceHud";
-import { RightSidebar } from "../components/RightSidebar";
+import { DatabaseConfigPanel } from "../components/RightSidebar/DatabaseConfigPanel";
+import { QueryHistory } from "../components/QueryHistory";
 import { useQueryHistory } from "../hooks/useQueryHistory";
 import { useDatabaseConfig, type DatabaseConfig } from "../hooks/useDatabaseConfig";
 
@@ -29,7 +30,7 @@ const Home = () => {
 
   // History & DB Config
   const { history, saveToHistory, clearHistory, setHistoryList } = useQueryHistory();
-  const { config: dbConfig, setConfig: setDbConfig, status: dbStatus, errorMessage: dbErrorMessage } = useDatabaseConfig();
+  const { config: dbConfig, setConfig: setDbConfig, saveConfig, deleteConfig, importConfigs, savedConfigs, status: dbStatus, errorMessage: dbErrorMessage } = useDatabaseConfig();
 
   // Toast notifications state
   interface Toast {
@@ -53,9 +54,19 @@ const Home = () => {
     setDbConfig(newConfig);
   };
 
-  const handleImportHistory = (importedHistory: any[]) => {
-    setHistoryList(importedHistory);
-    showToast(`Successfully imported ${importedHistory.length} query history items!`, 'success');
+  const handleImportWorkspace = (data: any) => {
+    let importedHistory = 0;
+    let importedConfigs = 0;
+    
+    if (data.history && Array.isArray(data.history)) {
+      setHistoryList(data.history);
+      importedHistory = data.history.length;
+    }
+    if (data.savedConfigs && Array.isArray(data.savedConfigs)) {
+      importConfigs(data.savedConfigs);
+      importedConfigs = data.savedConfigs.length;
+    }
+    showToast(`Imported ${importedHistory} queries and ${importedConfigs} connections!`, 'success');
   };
 
   const graphRef = useRef<HTMLDivElement>(null);
@@ -168,30 +179,135 @@ const Home = () => {
     }
   };
 
+  const handleExportWorkspace = () => {
+    if (history.length === 0 && savedConfigs.length === 0) return;
+    const workspace = { history, savedConfigs };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(workspace, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `sql_visualizer_workspace_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleImportWorkspaceClick = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target?.result as string);
+          if (Array.isArray(imported)) {
+            const isValid = imported.every((item) => item && typeof item.query === "string");
+            if (isValid) {
+              handleImportWorkspace({ history: imported, savedConfigs: [] });
+            } else {
+              showToast("Invalid file format.", "error");
+            }
+          } else if (imported && typeof imported === 'object') {
+            handleImportWorkspace(imported);
+          } else {
+            showToast("Invalid workspace file format.", "error");
+          }
+        } catch (err) {
+          showToast("Failed to parse workspace file.", "error");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
   return (
-    <div className="max-w-350 mx-auto min-h-screen p-8 flex flex-col gap-10">
+    <div className="max-w-[1600px] mx-auto min-h-screen px-5 py-8 flex flex-col gap-10">
       {/* 1. APP HEADER */}
       <Navbar />
 
       {/* 2. PERFORMANCE HUD */}
       <PerformanceHud />
 
-      <div className="grid grid-cols-12 gap-8 items-start">
-        {/* LEFT: Editor & Visualizer (decreased to 7 columns to accommodate sidebar's 5 columns) */}
-        <div className="col-span-7 flex flex-col gap-8">
-          <SqlEditor 
-            query={query} 
-            setQuery={setQuery} 
-            onRun={handleRun} 
-            onOptimize={handleOptimize}
-            isLoading={loading} 
-            isOptimizing={isOptimizing}
-            errorDetails={errorDetails} 
-          />
+      <div className="flex flex-col gap-8">
+        {/* TOP ROW: Responsive Editor and Combined Sidebar */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_350px] xl:grid-cols-[1fr_max-content] gap-8 items-start md:h-[500px]">
+          
+          <div className="flex flex-col h-[500px]">
+            <SqlEditor 
+              query={query} 
+              setQuery={setQuery} 
+              onRun={handleRun} 
+              onOptimize={handleOptimize}
+              isLoading={loading} 
+              isOptimizing={isOptimizing}
+              errorDetails={errorDetails} 
+            />
+          </div>
+          
+          {/* COMBINED SIDEBAR PANEL */}
+          <div className="bg-surface-low rounded-xl p-6 border border-surface-bright/5 flex flex-col h-[800px] md:h-[500px] w-full xl:w-auto">
+            {/* Unified Header */}
+            <div className="flex justify-between items-center shrink-0 border-b border-surface-bright/10 pb-4 mb-6">
+              <h3 className="font-display uppercase text-[10px] tracking-[0.3em] text-white/40 flex items-center gap-2">
+                <Monitor size={14} />
+                Workspace
+              </h3>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleImportWorkspaceClick}
+                  className="text-white/20 hover:text-primary transition-colors"
+                  title="Import Workspace (History & DB Connections)"
+                >
+                  <Upload size={14} />
+                </button>
+                {(history.length > 0 || savedConfigs.length > 0) && (
+                  <button
+                    onClick={handleExportWorkspace}
+                    className="text-white/20 hover:text-primary transition-colors"
+                    title="Export Workspace (History & DB Connections)"
+                  >
+                    <Download size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
 
+            {/* Layout Preserved Grid inside Workspace */}
+            <div className="grid grid-cols-1 xl:grid-cols-[350px_350px] gap-8 flex-1 min-h-0 overflow-hidden md:grid-rows-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-rows-1">
+              <div className="flex flex-col h-full min-h-0 overflow-hidden">
+                <DatabaseConfigPanel 
+                  config={dbConfig} 
+                  onSaveConfig={saveConfig} 
+                  deleteConfig={deleteConfig}
+                  savedConfigs={savedConfigs}
+                  setConfig={setDbConfig}
+                  status={dbStatus}
+                  errorMessage={dbErrorMessage}
+                />
+              </div>
+
+              <div className="flex flex-col h-full min-h-0 overflow-hidden">
+                <QueryHistory 
+                  history={history} 
+                  savedConfigs={savedConfigs}
+                  onSelectQuery={handleSelectHistory} 
+                  onClearHistory={clearHistory} 
+                  activeQuery={query}
+                  onImportWorkspace={handleImportWorkspace}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM ROW: Graph */}
+        <div className="w-full">
           <div 
             ref={graphRef}
-            className={`${isFullScreen ? 'fixed inset-4 z-50 flex flex-col bg-[#0b0c10] shadow-[0_0_100px_rgba(0,0,0,0.8)]' : 'bg-surface-low'} rounded-xl p-8 border border-surface-bright/5 transition-all duration-300`}
+            className={`${isFullScreen ? 'fixed inset-4 z-50 flex flex-col bg-[#0b0c10] shadow-[0_0_100px_rgba(0,0,0,0.8)]' : 'bg-surface-low w-full'} rounded-xl p-8 border border-surface-bright/5 transition-all duration-300`}
           >
             <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
               <div className="flex flex-col gap-2 min-w-0 shrink">
@@ -272,19 +388,6 @@ const Home = () => {
             </div>
           </div>
         </div>
-
-        {/* RIGHT: Sidebar (increased to 5 columns) */}
-        <RightSidebar 
-          history={history} 
-          onSelectQuery={handleSelectHistory} 
-          onClearHistory={clearHistory} 
-          dbConfig={dbConfig}
-          onSaveDbConfig={handleSaveDbConfig}
-          dbStatus={dbStatus}
-          dbErrorMessage={dbErrorMessage}
-          activeQuery={query}
-          onImportHistory={handleImportHistory}
-        />
       </div>
 
       {/* Toast Notifications */}

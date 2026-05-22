@@ -97,7 +97,7 @@ export const SqlEditor = ({ query, setQuery, onRun, onOptimize, isLoading, isOpt
   };
 
   return (
-    <div className="bg-surface-container rounded-lg overflow-hidden flex flex-col shadow-2xl border border-surface-bright/5">
+    <div className="h-full bg-surface-container rounded-lg overflow-hidden flex flex-col shadow-2xl border border-surface-bright/5">
       {/* Editor Header */}
       <div className="px-4 py-3 bg-surface-high/30 flex justify-between items-center border-b border-surface-bright/10">
         <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export const SqlEditor = ({ query, setQuery, onRun, onOptimize, isLoading, isOpt
 
       {/* Editor Surface */}
       <div 
-        className="bg-surface-lowest p-6 min-h-75 font-mono text-sm relative group cursor-text"
+        className="flex-1 bg-surface-lowest p-6 min-h-75 font-mono text-sm relative group cursor-text"
         onClick={() => textareaRef.current?.focus()}
       >
         <div className="flex gap-6 h-full min-h-62.5">

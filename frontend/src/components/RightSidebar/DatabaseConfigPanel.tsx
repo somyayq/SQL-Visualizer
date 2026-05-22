@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Database, Settings2, Save, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
+import { Database, Settings2, Save, Wifi, WifiOff, Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { type DatabaseConfig, type ConnectionStatus } from "../../hooks/useDatabaseConfig";
 
 interface DatabaseConfigProps {
   config: DatabaseConfig;
   onSaveConfig: (config: DatabaseConfig) => void;
+  deleteConfig: (id: string) => void;
+  savedConfigs: DatabaseConfig[];
+  setConfig: (config: DatabaseConfig) => void;
   status: ConnectionStatus;
   errorMessage?: string;
 }
 
-export const DatabaseConfigPanel = ({ config, onSaveConfig, status, errorMessage }: DatabaseConfigProps) => {
+export const DatabaseConfigPanel = ({ config, onSaveConfig, deleteConfig, savedConfigs, setConfig, status, errorMessage }: DatabaseConfigProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [localConfig, setLocalConfig] = useState<DatabaseConfig>(config);
 
@@ -23,8 +26,8 @@ export const DatabaseConfigPanel = ({ config, onSaveConfig, status, errorMessage
   };
 
   return (
-    <div className="bg-surface-low rounded-xl p-6 border border-surface-bright/5">
-      <div className="flex justify-between items-center mb-6">
+    <div className="h-full w-full flex flex-col min-h-0">
+      <div className="flex justify-between items-center mb-6 shrink-0">
         <h3 className="font-display uppercase text-[10px] tracking-[0.3em] text-white/40 flex items-center gap-2">
           <Database size={14} />
           Database Connection
@@ -42,17 +45,53 @@ export const DatabaseConfigPanel = ({ config, onSaveConfig, status, errorMessage
       </div>
 
       {!isEditing ? (
-        <div className="space-y-3">
-          <div className="bg-surface-lowest p-4 rounded-md border-l-2 border-primary">
-            <p className="text-white font-display text-sm">
-              {config.database || 'No Database'}
-            </p>
-            <p className="text-[10px] font-mono opacity-40">
-              {config.host}:{config.port} ({config.type})
-            </p>
+        <div className="flex-1 flex flex-col gap-3 min-h-0">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2">
+            {savedConfigs.map(c => (
+              <div 
+                key={c.id} 
+                onClick={() => setConfig(c)}
+                className={`cursor-pointer bg-surface-lowest p-3 rounded-md border transition-all ${
+                  config.id === c.id 
+                    ? 'border-primary shadow-[0_0_10px_rgba(var(--color-primary),0.1)]' 
+                    : 'border-surface-bright/10 hover:border-primary/50'
+                }`}
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <p className="text-white font-display text-sm truncate pr-2">
+                    {c.name || c.database || 'Database'}
+                  </p>
+                  {config.id !== c.id && (
+                    <button 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        deleteConfig(c.id!); 
+                      }} 
+                      className="text-white/20 hover:text-red-400 transition-colors"
+                      title="Delete Connection"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] font-mono opacity-40">
+                  {c.host}:{c.port} ({c.type})
+                </p>
+              </div>
+            ))}
           </div>
+
+          <button 
+            onClick={() => { 
+              setLocalConfig({ host: 'localhost', port: '5432', user: 'postgres', password: '', database: '', type: 'postgres' }); 
+              setIsEditing(true); 
+            }} 
+            className="shrink-0 w-full flex justify-center items-center gap-1.5 text-[10px] uppercase font-mono py-2 border border-dashed border-surface-bright/20 rounded hover:border-primary/50 text-white/40 hover:text-primary transition-colors mt-1"
+          >
+            <Plus size={12} /> New Connection
+          </button>
           {/* Connection status */}
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 shrink-0">
             {status === 'connecting' && (
               <span className="flex items-center gap-1.5 text-yellow-500 font-mono text-xs">
                 <Loader2 size={12} className="animate-spin" /> Connecting...
@@ -75,16 +114,27 @@ export const DatabaseConfigPanel = ({ config, onSaveConfig, status, errorMessage
             )}
           </div>
           {status === 'error' && errorMessage && (
-            <p className="text-[10px] font-mono text-red-400/85 mt-1 max-w-full break-words bg-red-500/5 p-2 rounded border border-red-500/10">
+            <p className="shrink-0 text-[10px] font-mono text-red-400/85 mt-1 max-w-full break-words bg-red-500/5 p-2 rounded border border-red-500/10">
               {errorMessage}
             </p>
           )}
-          <p className="text-[10px] text-white/30 italic text-center mt-2">
+          <p className="shrink-0 text-[10px] text-white/30 italic text-center mt-2">
             Using connection for realistic query plans.
           </p>
         </div>
       ) : (
-        <div className="space-y-3 font-mono text-[11px] flex flex-col gap-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3 font-mono text-[11px] flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-white/40">Name (Optional)</label>
+            <input 
+              name="name" 
+              value={localConfig.name || ''} 
+              onChange={handleChange}
+              className="bg-surface-lowest border border-surface-bright/10 rounded px-2 py-1.5 text-white outline-none focus:border-primary/50"
+              placeholder="My Production DB"
+            />
+          </div>
+
           <div className="flex flex-col gap-1">
             <label className="text-white/40">Type</label>
             <select 
@@ -156,12 +206,20 @@ export const DatabaseConfigPanel = ({ config, onSaveConfig, status, errorMessage
             </div>
           </div>
 
-          <button 
-            onClick={handleSave}
-            className="mt-2 w-full bg-primary/20 text-primary hover:bg-primary hover:text-black font-bold py-1.5 rounded transition-colors flex items-center justify-center gap-2 uppercase tracking-wider text-[10px]"
-          >
-            <Save size={12} /> Save Config
-          </button>
+          <div className="flex gap-2 mt-2">
+            <button 
+              onClick={() => setIsEditing(false)}
+              className="flex-1 bg-surface-lowest border border-surface-bright/10 text-white/60 hover:text-white font-bold py-1.5 rounded transition-colors flex items-center justify-center uppercase tracking-wider text-[10px]"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSave}
+              className="flex-1 bg-primary/20 text-primary hover:bg-primary hover:text-black font-bold py-1.5 rounded transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider text-[10px]"
+            >
+              <Save size={12} /> Save
+            </button>
+          </div>
         </div>
       )}
     </div>

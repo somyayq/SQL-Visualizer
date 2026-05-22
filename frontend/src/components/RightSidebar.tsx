@@ -9,6 +9,10 @@ interface RightSidebarProps {
   onClearHistory: () => void;
   dbConfig: DatabaseConfig;
   onSaveDbConfig: (config: DatabaseConfig) => void;
+  saveConfig: (config: DatabaseConfig) => void;
+  deleteConfig: (id: string) => void;
+  savedConfigs: DatabaseConfig[];
+  setDbConfig: (config: DatabaseConfig) => void;
   dbStatus: ConnectionStatus;
   dbErrorMessage?: string;
   activeQuery?: string;
@@ -21,6 +25,10 @@ export const RightSidebar = ({
   onClearHistory, 
   dbConfig, 
   onSaveDbConfig,
+  saveConfig,
+  deleteConfig,
+  savedConfigs,
+  setDbConfig,
   dbStatus,
   dbErrorMessage,
   activeQuery,
@@ -31,7 +39,10 @@ export const RightSidebar = ({
       {/* Database Connection Config */}
       <DatabaseConfigPanel 
         config={dbConfig} 
-        onSaveConfig={onSaveDbConfig} 
+        onSaveConfig={saveConfig} 
+        deleteConfig={deleteConfig}
+        savedConfigs={savedConfigs}
+        setConfig={setDbConfig}
         status={dbStatus}
         errorMessage={dbErrorMessage}
       />
