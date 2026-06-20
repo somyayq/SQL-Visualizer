@@ -6,6 +6,21 @@ import { getMysqlPlan } from "./adapters/mysql.js"
 import { ApiResponse } from "../../types/api.types.js"
 import { PlanData } from "../../types/plan.types.js"
 
+const isConnectionError = (error: any) => {
+  const code = error?.code;
+  const message = String(error?.message || "");
+
+  return [
+    "ECONNREFUSED",
+    "ENOTFOUND",
+    "ETIMEDOUT",
+    "EHOSTUNREACH",
+    "ECONNRESET",
+    "PROTOCOL_CONNECTION_LOST",
+    "ER_ACCESS_DENIED_ERROR"
+  ].includes(code) || /connect|timeout|authentication/i.test(message);
+};
+
 export const getPlan = async (req: Request, res: Response) => {
   try {
     const { query, dbConfig } = req.body as { query: string, dbConfig?: any }
@@ -28,17 +43,20 @@ export const getPlan = async (req: Request, res: Response) => {
         } else if (dbConfig.type === 'mysql') {
           plan = await getMysqlPlan(query, dbConfig);
         } else {
-          // Fallback if type is unsupported
-          const ast = parseSQL(query)
-          plan = generatePlan(ast)
+          const ast = parseSQL(query);
+          plan = generatePlan(ast);
         }
       } catch (dbError: any) {
-        throw new Error(`Database error: ${dbError.message}`);
+        if (isConnectionError(dbError)) {
+          throw new Error(`Database connection failed: ${dbError.message}`);
+        }
+
+        const ast = parseSQL(query);
+        plan = generatePlan(ast);
       }
     } else {
-      // Fallback to mock AST-based plan
-      const ast = parseSQL(query)
-      plan = generatePlan(ast)
+      const ast = parseSQL(query);
+      plan = generatePlan(ast);
     }
 
     const response: ApiResponse<PlanData> = {
