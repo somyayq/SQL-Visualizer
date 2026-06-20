@@ -9,7 +9,7 @@ import { PerformanceHud } from "../components/PerformanceHud";
 import { DatabaseConfigPanel } from "../components/RightSidebar/DatabaseConfigPanel";
 import { QueryHistory } from "../components/QueryHistory";
 import { useQueryHistory } from "../hooks/useQueryHistory";
-import { useDatabaseConfig, type DatabaseConfig } from "../hooks/useDatabaseConfig";
+import { useDatabaseConfig } from "../hooks/useDatabaseConfig";
 
 const Home = () => {
   // Editor state
@@ -46,12 +46,6 @@ const Home = () => {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
-  };
-
-
-
-  const handleSaveDbConfig = (newConfig: DatabaseConfig) => {
-    setDbConfig(newConfig);
   };
 
   const handleImportWorkspace = (data: any) => {
@@ -296,7 +290,7 @@ const Home = () => {
                   onSelectQuery={handleSelectHistory} 
                   onClearHistory={clearHistory} 
                   activeQuery={query}
-                  onImportWorkspace={handleImportWorkspace}
+                  onImportHistory={handleImportWorkspace}
                 />
               </div>
             </div>

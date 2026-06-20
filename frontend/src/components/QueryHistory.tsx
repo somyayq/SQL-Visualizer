@@ -1,24 +1,30 @@
-import { History, Trash2, Clock, Database, Activity, Download, Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  History,
+  Trash2,
+  Clock,
+  Database,
+  Activity,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { type HistoryItem } from "../hooks/useQueryHistory";
-
 import { type DatabaseConfig } from "../hooks/useDatabaseConfig";
 
-interface QueryHistoryProps {
+export interface QueryHistoryProps {
   history: HistoryItem[];
   savedConfigs: DatabaseConfig[];
   onSelectQuery: (query: string) => void;
   onClearHistory: () => void;
   activeQuery?: string;
-  onImportWorkspace?: (workspace: any) => void;
+  // FIX 1: Renamed from onImportWorkspace to onImportHistory to match parent components
+  onImportHistory?: (imported: HistoryItem[]) => void; 
 }
 
 export const QueryHistory = ({
   history,
-  savedConfigs,
   onSelectQuery,
   onClearHistory,
-  activeQuery,
-  onImportWorkspace,
+  activeQuery, 
 }: QueryHistoryProps) => {
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -46,7 +52,9 @@ export const QueryHistory = ({
       </div>
       <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
         {history.length === 0 ? (
-          <div className="text-center py-8 text-white/20 text-xs font-mono italic">No queries in history</div>
+          <div className="text-center py-8 text-white/20 text-xs font-mono italic">
+            No queries in history
+          </div>
         ) : (
           history.map((item) => {
             const isActive = activeQuery?.trim() === item.query?.trim();
@@ -60,9 +68,15 @@ export const QueryHistory = ({
                     : "border-primary/20 hover:border-primary/60 hover:bg-surface-lowest/80"
                 }`}
               >
-                <p className={`font-mono text-xs line-clamp-3 break-all transition-colors ${
-                  isActive ? "text-primary font-medium" : "text-white/80 group-hover:text-white"
-                }`}>{item.query}</p>
+                <p
+                  className={`font-mono text-xs line-clamp-3 break-all transition-colors ${
+                    isActive
+                      ? "text-primary font-medium"
+                      : "text-white/80 group-hover:text-white"
+                  }`}
+                >
+                  {item.query}
+                </p>
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[9px] font-mono opacity-40">
                     <Clock size={10} />
@@ -70,22 +84,34 @@ export const QueryHistory = ({
                   </div>
                   <div className="flex items-center gap-3 text-[9px] font-mono">
                     {item.status === "success" && (
-                      <span className="flex items-center gap-1 text-green-400" title="Success">
+                      <span
+                        className="flex items-center gap-1 text-green-400"
+                        title="Success"
+                      >
                         <CheckCircle2 size={10} /> Success
                       </span>
                     )}
                     {item.status === "error" && (
-                      <span className="flex items-center gap-1 text-red-400" title={item.errorMessage || "Error"}>
+                      <span
+                        className="flex items-center gap-1 text-red-400"
+                        title={item.errorMessage || "Error"}
+                      >
                         <AlertCircle size={10} /> Error
                       </span>
                     )}
                     {item.rows !== undefined && (
-                      <span className="flex items-center gap-1 text-primary opacity-80" title="Rows">
+                      <span
+                        className="flex items-center gap-1 text-primary opacity-80"
+                        title="Rows"
+                      >
                         <Database size={10} /> {item.rows.toLocaleString()}
                       </span>
                     )}
                     {item.cost !== undefined && (
-                      <span className="flex items-center gap-1 text-green-400 opacity-80" title="Cost">
+                      <span
+                        className="flex items-center gap-1 text-green-400 opacity-80"
+                        title="Cost"
+                      >
                         <Activity size={10} /> {item.cost.toLocaleString()}
                       </span>
                     )}

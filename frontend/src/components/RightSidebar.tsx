@@ -24,7 +24,6 @@ export const RightSidebar = ({
   onSelectQuery, 
   onClearHistory, 
   dbConfig, 
-  onSaveDbConfig,
   saveConfig,
   deleteConfig,
   savedConfigs,
@@ -50,6 +49,7 @@ export const RightSidebar = ({
       {/* Query History */}
       <QueryHistory 
         history={history} 
+        savedConfigs={savedConfigs}
         onSelectQuery={onSelectQuery} 
         onClearHistory={onClearHistory} 
         activeQuery={activeQuery}
