@@ -1,4 +1,5 @@
 import { type DatabaseConfig } from "../hooks/useDatabaseConfig";
+const apiUrl=import.meta.env.VITE_API_URL;
 
 const MOCK_PLAN = {
   nodes: [
@@ -26,10 +27,37 @@ const MOCK_OPT_PLAN = {
   ]
 };
 
+const isLocalPlaceholderConfig = (dbConfig?: DatabaseConfig) => {
+  const host = dbConfig?.host?.trim().toLowerCase();
+
+  return !dbConfig?.host
+    || !dbConfig?.database
+    || !dbConfig?.user
+    || dbConfig?.id === "default"
+    || host === "localhost"
+    || host === "127.0.0.1"
+    || host === "::1";
+};
+
+const isConnectionFailure = (err: unknown) => {
+  if (err instanceof TypeError) return true;
+
+  if (typeof err !== "object" || err === null) return false;
+
+  const anyErr = err as { message?: string; error?: string; code?: string };
+  const text = `${anyErr.message || ""} ${anyErr.error || ""} ${anyErr.code || ""}`;
+
+  return /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|ECONNRESET|network|connection/i.test(text);
+};
+
 export const getPlan = async (query: string, dbConfig?: DatabaseConfig) => {
   query = query.trim().replace(/;$/, "")
+  if (isLocalPlaceholderConfig(dbConfig)) {
+    return MOCK_PLAN;
+  }
+
   try {
-    const res = await fetch("http://localhost:5050/api/plan", {
+    const res = await fetch(`${apiUrl}/api/plan`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -45,6 +73,10 @@ export const getPlan = async (query: string, dbConfig?: DatabaseConfig) => {
 
     return data.data;
   } catch (err) {
+    if (!isConnectionFailure(err)) {
+      throw err;
+    }
+
     console.warn("Database connection failed, falling back to mock plan", err);
     return MOCK_PLAN;
   }
@@ -52,8 +84,15 @@ export const getPlan = async (query: string, dbConfig?: DatabaseConfig) => {
 
 export const optimizeQuery = async (query: string, dbConfig?: DatabaseConfig) => {
   query = query.trim().replace(/;$/, "")
+  if (isLocalPlaceholderConfig(dbConfig)) {
+    return {
+      optimizedQuery: query + "\n-- Optimized by Mock AI",
+      plan: MOCK_OPT_PLAN
+    };
+  }
+
   try {
-    const res = await fetch("http://localhost:5050/api/optimize", {
+    const res = await fetch(`${apiUrl}/api/optimize`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -69,6 +108,10 @@ export const optimizeQuery = async (query: string, dbConfig?: DatabaseConfig) =>
 
     return data.data; // Expected: { optimizedQuery: string, plan: PlanData }
   } catch (err) {
+    if (!isConnectionFailure(err)) {
+      throw err;
+    }
+
     console.warn("Database connection failed, falling back to mock optimized plan", err);
     return {
       optimizedQuery: query + "\n-- Optimized by Mock AI",
@@ -78,8 +121,12 @@ export const optimizeQuery = async (query: string, dbConfig?: DatabaseConfig) =>
 };
 
 export const testDbConnection = async (dbConfig: DatabaseConfig) => {
+  if (isLocalPlaceholderConfig(dbConfig)) {
+    return { message: "Mock connection successful" };
+  }
+
   try {
-    const res = await fetch("http://localhost:5050/api/plan/test", {
+    const res = await fetch(`${apiUrl}/api/plan/test`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -95,10 +142,6 @@ export const testDbConnection = async (dbConfig: DatabaseConfig) => {
 
     return data.data; // Expected: { message: string }
   } catch (err) {
-    // If it's the default connection, fake a successful test so the UI doesn't look broken
-    if (dbConfig.id === 'default') {
-      return { message: "Mock connection successful" };
-    }
     throw err;
   }
 };
