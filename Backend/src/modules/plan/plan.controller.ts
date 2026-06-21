@@ -6,6 +6,18 @@ import { getMysqlPlan } from "./adapters/mysql.js"
 import { ApiResponse } from "../../types/api.types.js"
 import { PlanData } from "../../types/plan.types.js"
 
+const isLocalPlaceholderConfig = (dbConfig: any) => {
+  const host = String(dbConfig?.host || "").trim().toLowerCase();
+
+  return !dbConfig?.host
+    || !dbConfig?.database
+    || !dbConfig?.user
+    || dbConfig?.id === "default"
+    || host === "localhost"
+    || host === "127.0.0.1"
+    || host === "::1";
+};
+
 const isConnectionError = (error: any) => {
   const code = error?.code;
   const message = String(error?.message || "");
@@ -35,8 +47,8 @@ export const getPlan = async (req: Request, res: Response) => {
 
     let plan: PlanData;
 
-    // Use realistic DB plan if credentials are provided
-    if (dbConfig && dbConfig.host && dbConfig.user) {
+    // Use realistic DB plan only for reachable remote databases.
+    if (dbConfig && !isLocalPlaceholderConfig(dbConfig)) {
       try {
         if (dbConfig.type === 'postgres') {
           plan = await getPostgresPlan(query, dbConfig);
@@ -86,6 +98,14 @@ export const testConnection = async (req: Request, res: Response) => {
         error: "Configuration is incomplete. Please provide host, database, and user."
       }
       return res.status(400).json(response)
+    }
+
+    if (isLocalPlaceholderConfig(dbConfig)) {
+      const response: ApiResponse<{ message: string }> = {
+        success: true,
+        data: { message: "Using fallback plan configuration" }
+      }
+      return res.status(200).json(response)
     }
 
     if (dbConfig.type === 'postgres') {
