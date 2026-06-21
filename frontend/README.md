@@ -110,7 +110,7 @@ SQL-Visualizer/
 
 ## License
 
-MIT © 2026 Your Name
+MIT © 2026 Somya Sharma
 
 ---
 
