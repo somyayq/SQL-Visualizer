@@ -191,7 +191,7 @@ tcp://0.tcp.in.ngrok.io:19713
 
 ## 9. Deployment Notes
 
-- Frontend can be hosted on Vercel.
-- Backend can be hosted on Render.
+- Frontend is hosted on Vercel.
+- Backend is hosted on Render.
 - Frontend should call backend through `VITE_API_URL`.
 - Backend should connect to DB (direct host or ngrok tunnel host/port).
